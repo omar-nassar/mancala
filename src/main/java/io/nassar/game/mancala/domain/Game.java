@@ -6,10 +6,10 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -18,12 +18,36 @@ import java.time.LocalDateTime;
 public class Game {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
 
+    @Column(columnDefinition = "boolean default false")
+    Boolean hasGameFinished = false;
+
+    @OneToOne
+    Player winnerPlayer;
+
     @CreationTimestamp
-    LocalDateTime createdDateTime;
+    LocalDateTime createdAt;
 
-    Integer playerTurn;
+    @OneToOne
+    Player playerTurn;
 
-    Board board;
+    @OneToMany( cascade = CascadeType.ALL,
+                mappedBy = "game")
+    List<Player> players = new ArrayList<>();
+
+    @OneToMany( cascade = CascadeType.ALL,
+                mappedBy = "game",
+                fetch = FetchType.EAGER)
+    List<Pit> pits = new ArrayList<>();
+
+    public void addPit(Pit pit) {
+        this.pits.add(pit);
+        pit.setGame(this);
+    }
+
+    public void addPits(List<Pit> initialGamePits) {
+        initialGamePits.stream().forEach(this::addPit);
+    }
 }
