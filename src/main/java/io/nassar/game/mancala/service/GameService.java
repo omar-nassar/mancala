@@ -17,7 +17,7 @@ public class GameService {
     public Game createNewGame(String player1Name, String player2Name) {
         final Game game = new Game();
 
-        game.setPlayers(playerService.constructPlayers(player1Name, player2Name));
+        game.addPlayers(playerService.constructPlayers(player1Name, player2Name));
 
         game.setPlayerTurn(playerService.generatePlayerTurn(game.getPlayers()));
 

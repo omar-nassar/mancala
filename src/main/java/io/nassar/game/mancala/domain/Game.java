@@ -27,7 +27,6 @@ public class Game {
     @OneToOne
     Player winnerPlayer;
 
-    @CreationTimestamp
     LocalDateTime createdAt;
 
     @OneToOne
@@ -49,5 +48,19 @@ public class Game {
 
     public void addPits(List<Pit> initialGamePits) {
         initialGamePits.stream().forEach(this::addPit);
+    }
+
+    public void addPlayer(Player player) {
+        this.players.add(player);
+        player.setGame(this);
+    }
+
+    public void addPlayers(List<Player> players) {
+        players.stream().forEach(this::addPlayer);
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.setCreatedAt(LocalDateTime.now());
     }
 }
