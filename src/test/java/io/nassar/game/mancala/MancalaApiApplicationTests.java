@@ -34,14 +34,14 @@ class MancalaApiApplicationTests {
 		assertEquals(14, game.getPits().size());
 
 		assertEquals(2, game.getPits().stream().filter(Pit::getIsBigPit).count());
-		assertIterableEquals(Arrays.asList(7,14),
+		assertIterableEquals(Arrays.asList(6, 13),
 							 game.getPits().stream()
 									 		.filter(Pit::getIsBigPit)
 									 		.map(Pit::getIndex)
 									 		.collect(Collectors.toList()));
 
 		assertEquals(12, game.getPits().stream().filter((p) -> !p.getIsBigPit()).count());
-		assertIterableEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13),
+		assertIterableEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12),
 							 game.getPits().stream()
 									.filter((p) -> !p.getIsBigPit())
 									.map(Pit::getIndex)
@@ -60,28 +60,24 @@ class MancalaApiApplicationTests {
 									.findFirst()
 									.get();
 
-		assertThrows(BusinessException.class, () -> gameService.move(game.getId(), otherPlayerPit.getIndex()));
+		assertThrows(BusinessException.class, () -> gameService.sow(game.getId(), otherPlayerPit.getIndex()));
 	}
 
 	@Test
-	void playOnEmptyPit() {
+	void sowEmptyPit() {
 		Game game = gameService.createNewGame("p1", "p2");
 
-		Player playerTurn = game.getPlayerTurn();
-
-		Pit otherPlayerPit = game.getPits()
-									.stream()
-									.filter(p -> p.getPlayer().getId().equals(playerTurn.getId()))
-									.findFirst()
-									.get();
-
-		otherPlayerPit.setStoneCount(0);
-
-		assertThrows(BusinessException.class, () -> gameService.move(game.getId(), otherPlayerPit.getIndex()));
+		if(game.getPlayerTurn().getName().equals("p1")) {
+			gameService.sow(game.getId(), 0);
+			assertThrows(BusinessException.class, () -> gameService.sow(game.getId(), 0));
+		} else {
+			gameService.sow(game.getId(), 7);
+			assertThrows(BusinessException.class, () -> gameService.sow(game.getId(), 7));
+		}
 	}
 
 	@Test
-	void playFromBigPit() {
+	void sowBigPit() {
 		Game game = gameService.createNewGame("p1", "p2");
 
 		Player playerTurn = game.getPlayerTurn();
@@ -91,7 +87,7 @@ class MancalaApiApplicationTests {
 		Pit myBigPit = firstBigPit.getPlayer().getId().equals(playerTurn.getId()) ? firstBigPit :
 																					game.getPits().get(PitService.BIG_PIT_2_INDEX);
 
-		assertThrows(BusinessException.class, () -> gameService.move(game.getId(), myBigPit.getIndex()));
+		assertThrows(BusinessException.class, () -> gameService.sow(game.getId(), myBigPit.getIndex()));
 	}
 
 	@Test
@@ -117,6 +113,10 @@ class MancalaApiApplicationTests {
 	void sowSecondPitThatEndIntoOpponentPitAndSwitchPlayerTurn() {
 		Game game = gameService.createNewGame("p1", "p2");
 
+		if(game.getPlayerTurn().getName().equals("p2")) {
+			gameService.switchPlayerTurn(game.getPits(), game.getPits().get(PitService.BIG_PIT_2_INDEX));
+		}
+
 		Long currentPlayer = game.getPlayerTurn().getId();
 
 		gameService.sow(game.getPits(), 0);
@@ -137,6 +137,10 @@ class MancalaApiApplicationTests {
 	@Test
 	void sowFifthPitThatEndIntoFirstPitAndSwitchPlayerTurn() {
 		Game game = gameService.createNewGame("p1", "p2");
+
+		if(game.getPlayerTurn().getName().equals("p2")) {
+			gameService.switchPlayerTurn(game.getPits(), game.getPits().get(PitService.BIG_PIT_2_INDEX));
+		}
 
 		Long currentPlayer = game.getPlayerTurn().getId();
 
@@ -162,5 +166,36 @@ class MancalaApiApplicationTests {
 
 		assertNotEquals(currentPlayer, game.getPlayerTurn().getId());
 	}
+
+	@Test
+	void getOpponentsOppositePitShouldReturnOppositePitFromBothPlayerSides() {
+		Game game = gameService.createNewGame("p1", "p2");
+
+		Pit opponentPitFromFirstPlayerSide = gameService.getOppositePit(game.getPits().get(2), game.getPits());
+ 		Pit opponentPitFromSecondPlayerSide = gameService.getOppositePit(game.getPits().get(8), game.getPits());
+
+		assertEquals(10, opponentPitFromFirstPlayerSide.getIndex());
+		assertEquals(4, opponentPitFromSecondPlayerSide.getIndex());
+	}
+
+	@Test
+	void moveAllStonesIntoBigPitShouldEmptyAllSmallPitsForBothPlayerSides() {
+		Game game = gameService.createNewGame("p1", "p2");
+
+		gameService.moveAllStonesToBigPit(game.getPits(), 0, PitService.BIG_PIT_1_INDEX);
+		gameService.moveAllStonesToBigPit(game.getPits(), PitService.BIG_PIT_1_INDEX+1, PitService.BIG_PIT_2_INDEX);
+
+		assertEquals(36, game.getPits().get(PitService.BIG_PIT_1_INDEX).getStoneCount());
+		assertEquals(36, game.getPits().get(PitService.BIG_PIT_2_INDEX).getStoneCount());
+
+		for(int i = 0; i < PitService.BIG_PIT_1_INDEX; i++) {
+			assertEquals(0, game.getPits().get(i).getStoneCount());
+		}
+
+		for(int i = PitService.BIG_PIT_1_INDEX+1; i < PitService.BIG_PIT_2_INDEX; i++) {
+			assertEquals(0, game.getPits().get(i).getStoneCount());
+		}
+	}
+
 
 }
