@@ -8,9 +8,7 @@ import io.nassar.game.mancala.repository.GameRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,15 +30,15 @@ public class GameService {
         return gameRepository.save(game);
     }
 
-    public void move(Long gameId, Integer pitIndex) {
+    public Game sow(Long gameId, Integer pitIndex) {
         final Game game = gameRepository.findById(gameId)
                                         .orElseThrow(() -> new BusinessException("Invalid game ID" + gameId));
-
-        game.setPits(game.getPits().stream().sorted(Comparator.comparingInt(Pit::getIndex)).collect(Collectors.toList()));
 
         doValidations(game, pitIndex);
 
         sow(game.getPits(), pitIndex);
+
+        return gameRepository.save(game);
     }
 
     public void sow(List<Pit> pits, Integer startingPitIndex) {
@@ -88,32 +86,46 @@ public class GameService {
 
                         myBigPit.setStoneCount( myBigPit.getStoneCount() +
                                                 oppositePitStoneCount +
-                                                1);
+                                                currentPit.getStoneCount());
 
                         currentPit.setStoneCount(0);
                     }
                 }
                 break;
             }
-
-            //check if game finishes
         }
 
-        if( checkIfGameFinished(pits, PitService.BIG_PIT_1_INDEX) ||
-            checkIfGameFinished(pits, PitService.BIG_PIT_2_INDEX)) {
+        if( checkIfGameFinished(pits, 0, PitService.BIG_PIT_1_INDEX) ||
+            checkIfGameFinished(pits, PitService.BIG_PIT_1_INDEX+1, PitService.BIG_PIT_2_INDEX)) {
+
             pit.getGame().setHasGameFinished(true);
+
+            moveAllStonesToBigPit(pits, 0, PitService.BIG_PIT_1_INDEX);
+            moveAllStonesToBigPit(pits, PitService.BIG_PIT_1_INDEX+1, PitService.BIG_PIT_2_INDEX);
+
             final Pit firstBigPit = pits.get(PitService.BIG_PIT_1_INDEX);
             final Pit secondBigPit = pits.get(PitService.BIG_PIT_2_INDEX);
 
             pit.getGame().setWinnerPlayer(firstBigPit.getStoneCount() > secondBigPit.getStoneCount()?
                                             firstBigPit.getPlayer() :
-                                            firstBigPit.getPlayer());
+                                            secondBigPit.getPlayer());
         }
     }
 
-    private boolean checkIfGameFinished(List<Pit> pits, int bigPitIndex) {
+    public void moveAllStonesToBigPit(List<Pit> pits, int startIndex, int endIndex) {
+        for (int i = startIndex; i < endIndex; i++) {
+            if(pits.get(i).getStoneCount() != 0)  {
+                pits.get(endIndex)
+                        .setStoneCount(pits.get(endIndex).getStoneCount() + pits.get(i).getStoneCount());
+
+                pits.get(i).setStoneCount(0);
+            }
+        }
+    }
+
+    private boolean checkIfGameFinished(List<Pit> pits, int startIndex, int endIndex) {
         boolean isAllEmpty = true;
-        for (int i = 0; i < bigPitIndex; i++) {
+        for (int i = startIndex; i < endIndex; i++) {
             if(pits.get(i).getStoneCount() != 0)  {
                 isAllEmpty = false;
                 break;
@@ -127,8 +139,8 @@ public class GameService {
         return false;
     }
 
-    private void switchPlayerTurn(List<Pit> pits, Pit currentPit) {
-        if(currentPit.getIndex() < PitService.BIG_PIT_1_INDEX) {
+    public void switchPlayerTurn(List<Pit> pits, Pit currentPit) {
+        if(currentPit.getIndex() <= PitService.BIG_PIT_1_INDEX) {
             currentPit.getGame().setPlayerTurn(pits.get(PitService.BIG_PIT_2_INDEX).getPlayer());
         } else {
             currentPit.getGame().setPlayerTurn(pits.get(PitService.BIG_PIT_1_INDEX).getPlayer());
@@ -140,8 +152,12 @@ public class GameService {
                                                                     pits.get(PitService.BIG_PIT_2_INDEX);
     }
 
-    private Pit getOppositePit(Pit myPit, List<Pit> allPits) {
-        return allPits.get(myPit.getIndex() + PitService.SINGLE_PLAYER_NORMAL_PIT_COUNT);
+    public Pit getOppositePit(Pit myPit, List<Pit> allPits) {
+        if(myPit.getIndex() < PitService.BIG_PIT_1_INDEX) {
+            return allPits.get(allPits.size() - (myPit.getIndex() + 2));
+        } else {
+            return allPits.get(allPits.size() - myPit.getIndex() - 2);
+        }
     }
 
     private boolean isMyPit(Pit nextPit, Player player) {
@@ -183,8 +199,4 @@ public class GameService {
             throw new BusinessException("Invalid user turn!");
         }
     }
-/*
-    private Pit getPit(List<Pit> pits, Integer pitIndex) {
-        return pits.get(pitIndex - 1);
-    }*/
 }
