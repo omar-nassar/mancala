@@ -36,7 +36,6 @@ public class Pit {
     public Pit(Integer index, Player player, Boolean isBigPit, Integer stoneCount) {
         this.index = index;
         this.player = player;
-        this.game = game;
         this.isBigPit = isBigPit;
         this.stoneCount = stoneCount;
     }

@@ -3,6 +3,7 @@ package io.nassar.game.mancala.domain;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
@@ -13,6 +14,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Player {
     @Id
@@ -26,6 +28,10 @@ public class Player {
 
     @ManyToOne
     Game game;
+
+    public Player(String name) {
+        this.name = name;
+    }
 
     @Override
     public String toString() {

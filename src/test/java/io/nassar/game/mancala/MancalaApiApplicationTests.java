@@ -6,6 +6,7 @@ import io.nassar.game.mancala.domain.Player;
 import io.nassar.game.mancala.exception.BusinessException;
 import io.nassar.game.mancala.service.GameService;
 import io.nassar.game.mancala.service.PitService;
+import io.nassar.game.mancala.service.PlayerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,12 @@ class MancalaApiApplicationTests {
 
 	@Autowired
 	GameService gameService;
+
+	@Autowired
+	PlayerService playerService;
+
+	@Autowired
+	PitService pitService;
 
 	@Test
 	void createGame() {
@@ -96,7 +103,7 @@ class MancalaApiApplicationTests {
 
 		Long currentPlayer = game.getPlayerTurn().getId();
 
-		gameService.sow(game.getPits(), 0);
+		gameService.sow(game, 0);
 
 		assertEquals(0, game.getPits().get(0).getStoneCount());
 		assertEquals(7, game.getPits().get(1).getStoneCount());
@@ -114,13 +121,13 @@ class MancalaApiApplicationTests {
 		Game game = gameService.createNewGame("p1", "p2");
 
 		if(game.getPlayerTurn().getName().equals("p2")) {
-			gameService.switchPlayerTurn(game.getPits(), game.getPits().get(PitService.BIG_PIT_2_INDEX));
+			playerService.switchTurn(game, game.getPits().get(PitService.BIG_PIT_2_INDEX));
 		}
 
 		Long currentPlayer = game.getPlayerTurn().getId();
 
-		gameService.sow(game.getPits(), 0);
-		gameService.sow(game.getPits(), 1);
+		gameService.sow(game, 0);
+		gameService.sow(game, 1);
 
 		assertEquals(0, game.getPits().get(0).getStoneCount());
 		assertEquals(0, game.getPits().get(1).getStoneCount());
@@ -139,15 +146,15 @@ class MancalaApiApplicationTests {
 		Game game = gameService.createNewGame("p1", "p2");
 
 		if(game.getPlayerTurn().getName().equals("p2")) {
-			gameService.switchPlayerTurn(game.getPits(), game.getPits().get(PitService.BIG_PIT_2_INDEX));
+			playerService.switchTurn(game, game.getPits().get(PitService.BIG_PIT_2_INDEX));
 		}
 
 		Long currentPlayer = game.getPlayerTurn().getId();
 
-		gameService.sow(game.getPits(), 0);
-		gameService.sow(game.getPits(), 1);
-		gameService.sow(game.getPits(), 7);
-		gameService.sow(game.getPits(), 5);
+		gameService.sow(game, 0);
+		gameService.sow(game, 1);
+		gameService.sow(game, 7);
+		gameService.sow(game, 5);
 
   		assertEquals(2, game.getPits().get(0).getStoneCount());
 		assertEquals(0, game.getPits().get(1).getStoneCount());
@@ -171,8 +178,8 @@ class MancalaApiApplicationTests {
 	void getOpponentsOppositePitShouldReturnOppositePitFromBothPlayerSides() {
 		Game game = gameService.createNewGame("p1", "p2");
 
-		Pit opponentPitFromFirstPlayerSide = gameService.getOppositePit(game.getPits().get(2), game.getPits());
- 		Pit opponentPitFromSecondPlayerSide = gameService.getOppositePit(game.getPits().get(8), game.getPits());
+		Pit opponentPitFromFirstPlayerSide = pitService.getOppositePit(game.getPits(), game.getPits().get(2));
+ 		Pit opponentPitFromSecondPlayerSide = pitService.getOppositePit(game.getPits(), game.getPits().get(8));
 
 		assertEquals(10, opponentPitFromFirstPlayerSide.getIndex());
 		assertEquals(4, opponentPitFromSecondPlayerSide.getIndex());
@@ -182,8 +189,8 @@ class MancalaApiApplicationTests {
 	void moveAllStonesIntoBigPitShouldEmptyAllSmallPitsForBothPlayerSides() {
 		Game game = gameService.createNewGame("p1", "p2");
 
-		gameService.moveAllStonesToBigPit(game.getPits(), 0, PitService.BIG_PIT_1_INDEX);
-		gameService.moveAllStonesToBigPit(game.getPits(), PitService.BIG_PIT_1_INDEX+1, PitService.BIG_PIT_2_INDEX);
+		gameService.moveAllStonesIntoBigPits(game);
+		gameService.moveAllStonesIntoBigPits(game);
 
 		assertEquals(36, game.getPits().get(PitService.BIG_PIT_1_INDEX).getStoneCount());
 		assertEquals(36, game.getPits().get(PitService.BIG_PIT_2_INDEX).getStoneCount());
