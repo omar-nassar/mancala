@@ -52,6 +52,10 @@ public class PitService {
                                                                     pits.get(PitService.BIG_PIT_2_INDEX);
     }
 
+    public Pit getMyBigPit(Player player) {
+        return player.getPits().get(PitService.BIG_PIT_1_INDEX);
+    }
+
     /**
      * Determins the opposite pit of "{@code myPit}"
      *

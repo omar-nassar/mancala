@@ -2,6 +2,7 @@ package io.nassar.game.mancala.service;
 
 import io.nassar.game.mancala.domain.Game;
 import io.nassar.game.mancala.domain.Pit;
+import io.nassar.game.mancala.domain.Player;
 import io.nassar.game.mancala.exception.BusinessException;
 import io.nassar.game.mancala.repository.GameRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,11 @@ public class GameService {
         return gameRepository.save(game);
     }
 
+    public Game getGame(Long gameId) {
+        return gameRepository.findById(gameId)
+                              .orElseThrow(() -> new BusinessException("Invalid game ID: " + gameId));
+    }
+
     /**
      * Sow pit at index "{@code pitIndex}" for a specified "{@code gameId}".
      *
@@ -47,8 +53,7 @@ public class GameService {
      *
      * */
     public Game sow(Long gameId, int pitIndex) {
-        final Game game = gameRepository.findById(gameId)
-                                        .orElseThrow(() -> new BusinessException("Invalid game ID: " + gameId));
+        final Game game = getGame(gameId);
 
         doValidations(game, pitIndex);
 
@@ -148,9 +153,13 @@ public class GameService {
         final Pit firstBigPit = game.getPits().get(PitService.BIG_PIT_1_INDEX);
         final Pit secondBigPit = game.getPits().get(PitService.BIG_PIT_2_INDEX);
 
-        game.setWinnerPlayer(firstBigPit.getStoneCount() > secondBigPit.getStoneCount()?
-                                        firstBigPit.getPlayer() :
-                                        secondBigPit.getPlayer());
+        if(firstBigPit.getStoneCount() == secondBigPit.getStoneCount()) {
+            game.setIsTie(true);
+
+        } else {
+            game.setWinnerPlayer(firstBigPit.getStoneCount() > secondBigPit.getStoneCount() ?   firstBigPit.getPlayer() :
+                                                                                                secondBigPit.getPlayer());
+        }
     }
 
     public void moveAllStonesIntoBigPits(Game game) {
@@ -167,6 +176,22 @@ public class GameService {
     private void validateIfGameFinished(Game game) {
         if(game.getHasGameFinished()) {
             throw new BusinessException("Game already finished!");
+        }
+    }
+
+    public int getPlayerScore(Player player) {
+        return pitService.getMyBigPit(player).getStoneCount();
+    }
+
+    public Player getLooser(Game game) {
+        if (!game.getHasGameFinished()) {
+            throw new BusinessException("Game not finished yet!");
+        }
+
+        if(game.getPlayers().get(0).getId().equals(game.getWinnerPlayer().getId())) {
+            return game.getPlayers().get(1);
+        } else {
+            return game.getPlayers().get(0);
         }
     }
 }

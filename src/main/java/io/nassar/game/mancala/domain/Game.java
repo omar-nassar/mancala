@@ -23,6 +23,9 @@ public class Game {
     @Column(columnDefinition = "boolean default false")
     Boolean hasGameFinished = false;
 
+    @Column(columnDefinition = "boolean default false")
+    Boolean isTie = false;
+
     @OneToOne
     Player winnerPlayer;
 
