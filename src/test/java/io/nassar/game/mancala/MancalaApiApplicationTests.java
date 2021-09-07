@@ -205,4 +205,61 @@ class MancalaApiApplicationTests {
 	}
 
 
+
+	@Test
+	void testFullGameThenPlayer2ShouldWin() {
+
+		Game game = gameService.createNewGame("p1", "p2");
+
+		gameService.sow(game, 7);
+		gameService.sow(game, 8);
+		gameService.sow(game, 0);
+		gameService.sow(game, 9);
+		gameService.sow(game, 1);
+		gameService.sow(game, 10);
+		gameService.sow(game, 2);
+		gameService.sow(game, 11);
+		gameService.sow(game, 3);
+		gameService.sow(game, 12);
+		gameService.sow(game, 4);
+		gameService.sow(game, 7);
+		gameService.sow(game, 1);
+		gameService.sow(game, 9);
+		gameService.sow(game, 5);
+		gameService.sow(game, 10);
+		gameService.sow(game, 2);
+		gameService.sow(game, 11);
+		gameService.sow(game, 3);
+		gameService.sow(game, 7);
+		gameService.sow(game, 0);
+		gameService.sow(game, 1);
+		gameService.sow(game, 5);
+		gameService.sow(game, 8);
+		gameService.sow(game, 4);
+		gameService.sow(game, 9);
+		gameService.sow(game, 5);
+		gameService.sow(game, 3);
+		gameService.sow(game, 10);
+		gameService.sow(game, 0);
+		gameService.sow(game, 11);
+		gameService.sow(game, 2);
+		gameService.sow(game, 9);
+		gameService.sow(game, 1);
+		gameService.sow(game, 8);
+		gameService.sow(game, 3);
+		gameService.sow(game, 9);
+		gameService.sow(game, 0);
+		gameService.sow(game, 7);
+		gameService.sow(game, 4);
+		gameService.sow(game, 8);
+		gameService.sow(game, 5);
+
+		assertTrue(game.getHasGameFinished());
+
+		assertEquals(	game.getPlayers().stream().filter(p -> p.getName().equals("p2")).findFirst().get().getId(),
+						game.getWinnerPlayer().getId());
+
+		assertEquals(42, game.getPits().get(13).getStoneCount());
+
+	}
 }
