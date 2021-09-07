@@ -44,7 +44,7 @@ public class GameController {
     @PutMapping(value = "/{gameId}/pit/{index}",
                 produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(  response = GameResponse.class,
-                    value = "To sow stones from a pit. You have to pass the game ID and the pit's index.")
+                    value = "To sow stones from a pit. You have to pass the game ID and the pit's index (zero based).")
     public GameResponse sow(@PathVariable Long gameId, @PathVariable Integer index) {
         final Game game = gameService.sow(gameId, index);
 
