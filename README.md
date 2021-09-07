@@ -29,4 +29,5 @@ with below configuratinos:
     - User Name: sa
     - Password: password
   - ER Diagram: <br>
-![er_diagram.png](er_diagram.png)
+
+  ![erDiagram.png](erDiagram.png)
