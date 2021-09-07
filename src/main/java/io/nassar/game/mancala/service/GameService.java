@@ -14,12 +14,22 @@ public class GameService {
     final PitService pitService;
     final PlayerService playerService;
 
+    /**
+     * Creates a new game instance with six stones per each pit for both players.
+     * Player turn will be randomly selected.
+     *
+     * @Param player1Name
+     * @param player2Name
+     *
+     * @return {@link Game}
+     *
+     * */
     public Game createNewGame(String player1Name, String player2Name) {
         final Game game = new Game();
 
         game.addPlayers(playerService.constructPlayers(player1Name, player2Name));
 
-        game.setPlayerTurn(playerService.generatePlayerTurn(game.getPlayers()));
+        game.setPlayerTurn(playerService.selectPlayerTurn(game.getPlayers()));
 
         game.addPits(pitService.generateInitialPits(game.getPlayers().get(0),
                                                         game.getPlayers().get(1)));
@@ -27,6 +37,15 @@ public class GameService {
         return gameRepository.save(game);
     }
 
+    /**
+     * Sow pit at index "{@code pitIndex}" for a specified "{@code gameId}".
+     *
+     * @param gameId
+     * @param pitIndex pit to sow stones from
+     *
+     * @return {@link Game}
+     *
+     * */
     public Game sow(Long gameId, int pitIndex) {
         final Game game = gameRepository.findById(gameId)
                                         .orElseThrow(() -> new BusinessException("Invalid game ID: " + gameId));
@@ -38,15 +57,31 @@ public class GameService {
         return gameRepository.save(game);
     }
 
+    /**
+     * Sow the stones of pit "{@code startingPitIndex}" for the game
+     *
+     * @param game
+     * @param startingPitIndex
+     *
+     * */
     public void sow(Game game, int startingPitIndex) {
         int stonesInHand = game.getPits().get(startingPitIndex).getStoneCount();
         game.getPits().get(startingPitIndex).setStoneCount(0);
 
         sow(game, startingPitIndex, stonesInHand);
 
-        checkIfGameFinished(game);
+        if(hasGameFinished(game)) {
+            finishTheGame(game);
+        }
     }
 
+    /**
+     * Sow the stones in hand "{@code stonesInHand}" of index "{@code pitIndex}" for the passed game instance.
+     *
+     * @param game
+     * @param pitIndex the index of the pit
+     * @param stonesInHand the stones of the pit that the user wants to sow
+     * */
     private void sow(Game game, int pitIndex, int stonesInHand) {
         int startingPitIndex = pitIndex;
 
@@ -77,6 +112,15 @@ public class GameService {
         return pitIndex;
     }
 
+    /**
+     * When stones in hand are empty, we have to check if the last pit was big or little one to determine the player turn.
+     * Also, this checks if it's my little pit and contains only 1 pit in order to collect the opposite pit's stones.
+     * {@link PitService#moveStonesFromCurrentAndOppositeIntoMyBigPit}
+     *
+     * @param game
+     * @param startingPitIndex
+     * @param currentPit
+     * */
     private void handleStonesInHandAreEmpty(Game game, int startingPitIndex, Pit currentPit) {
         if(!currentPit.getIsBigPit()) {
             playerService.switchTurn(game, game.getPits().get(startingPitIndex));
@@ -89,12 +133,9 @@ public class GameService {
         }
     }
 
-    private void checkIfGameFinished(Game game) {
-        if( pitService.arePitsInRangeEmpty(game.getPits(), 0, PitService.BIG_PIT_1_INDEX) ||
-            pitService.arePitsInRangeEmpty(game.getPits(), PitService.BIG_PIT_1_INDEX+1, PitService.BIG_PIT_2_INDEX)) {
-
-            finishTheGame(game);
-        }
+    private boolean hasGameFinished(Game game) {
+        return  pitService.arePitsInRangeEmpty(game.getPits(), 0, PitService.BIG_PIT_1_INDEX) ||
+                pitService.arePitsInRangeEmpty(game.getPits(), PitService.BIG_PIT_1_INDEX+1, PitService.BIG_PIT_2_INDEX);
     }
 
     private void finishTheGame(Game game) {
@@ -120,7 +161,7 @@ public class GameService {
     private void doValidations(Game game, int pitIndex) {
         validateIfGameFinished(game);
         playerService.validatePlayerTurn(game.getPits().get(pitIndex).getPlayer().getId(), game.getPlayerTurn().getId());
-        pitService.doPitValidations(game, pitIndex);
+        pitService.doValidations(game, pitIndex);
     }
 
     private void validateIfGameFinished(Game game) {

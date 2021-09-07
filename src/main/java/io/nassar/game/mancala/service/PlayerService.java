@@ -17,11 +17,19 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class PlayerService {
 
-    public Player generatePlayerTurn(List<Player> players) {
+    /**
+     * Selects a player turn randomly from the passed player list.
+     * The list should be of size 2 only.
+     *
+     * @param players list of players to select from
+     *
+     * @return {@link Player}
+     * */
+    public Player selectPlayerTurn(List<Player> players) {
         if(players != null && players.size() != 2) {
             log.error("Invalid players count ... ");
             players.stream().forEach(log::error);
-            throw new RuntimeException("Invalid players count");
+            throw new RuntimeException("Invalid players count, the list should contain only 2 players.");
         }
 
         return new Random().nextBoolean() ? players.get(0) : players.get(1);
@@ -32,6 +40,13 @@ public class PlayerService {
                                 new Player(player2Name));
     }
 
+    /**
+     * Switches the player turn. It determines the player of the "{@code currentPit}" and switches to the other player.
+     *
+     * @param game
+     * @param currentPit
+     *
+     * */
     public void switchTurn(Game game, Pit currentPit) {
         if(currentPit.getIndex() <= PitService.BIG_PIT_1_INDEX) {
             currentPit.getGame().setPlayerTurn(game.getPits().get(PitService.BIG_PIT_2_INDEX).getPlayer());

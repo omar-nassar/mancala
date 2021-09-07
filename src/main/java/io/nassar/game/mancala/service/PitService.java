@@ -16,6 +16,15 @@ public class PitService {
     public static final int BIG_PIT_1_INDEX = 6;
     public static final int BIG_PIT_2_INDEX = 13;
 
+    /**
+     * Prepares list of pits each initialized with six stones. Linking each pit with the corresponding player.
+     *
+     * @param player1
+     * @param player2
+     *
+     * @return {@link List<Pit>}
+     *
+     * */
     public List<Pit> generateInitialPits(Player player1, Player player2) {
 
         final Pit pit1 = new Pit(0, player1, PitService.DEFAULT_PIT_STONE_COUNT);
@@ -43,6 +52,14 @@ public class PitService {
                                                                     pits.get(PitService.BIG_PIT_2_INDEX);
     }
 
+    /**
+     * Determins the opposite pit of "{@code myPit}"
+     *
+     * @param allPits
+     * @param myPit
+     *
+     * @return {@link Pit} the opposite pit
+     * */
     public Pit getOppositePit(List<Pit> allPits, Pit myPit) {
         if(myPit.getIndex() < PitService.BIG_PIT_1_INDEX) {
             return allPits.get(allPits.size() - (myPit.getIndex() + 2));
@@ -74,6 +91,14 @@ public class PitService {
         }
     }
 
+    /**
+     * When last stone in hand lands into my empty and little pit,
+     * this method will move this only stone and the stones inside the opposite pit into my big pit.
+     *
+     * @param game
+     * @param currentPit
+     *
+     * */
     public void moveStonesFromCurrentAndOppositeIntoMyBigPit(Game game, Pit currentPit) {
         Pit oppositePit = getOppositePit(game.getPits(), currentPit);
         int oppositePitStoneCount = oppositePit.getStoneCount();
@@ -96,7 +121,7 @@ public class PitService {
         return true;
     }
 
-    public void doPitValidations(Game game, int pitIndex) {
+    public void doValidations(Game game, int pitIndex) {
         validateIsNotBigPit(game, pitIndex);
         validatePitSize(game, pitIndex);
     }
